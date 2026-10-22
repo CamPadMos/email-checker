@@ -1,0 +1,29 @@
+From: "Florida Blue Member Services" <alerts@floridablue-benefits.com>
+Reply-To: support@secure-claims.xyz
+Return-Path: <bounce@mailer-xz9.top>
+To: member@example.com
+Subject: URGENT: Your coverage will be terminated within 24 hours
+Date: Fri, 16 Oct 2026 09:12:00 -0400
+Authentication-Results: mx.example.com; spf=fail smtp.mailfrom=mailer-xz9.top; dkim=none; dmarc=fail
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BOUNDARY"
+
+--BOUNDARY
+Content-Type: text/html; charset="utf-8"
+
+<html><body>
+<p>Dear Member,</p>
+<p>We detected unusual activity on your health plan. Your coverage will be terminated
+unless you verify your identity immediately.</p>
+<p>Please confirm your Member ID and password here:
+<a href="http://185.22.14.7/login/floridablue">https://www.floridablue.com/verify</a></p>
+<p>Or use this backup link: <a href="https://bit.ly/3fb-verify">Verify now</a></p>
+<p>Florida Blue Member Services</p>
+</body></html>
+
+--BOUNDARY
+Content-Type: application/octet-stream
+Content-Disposition: attachment; filename="Claim_Statement.html"
+
+PGh0bWw+PC9odG1sPg==
+--BOUNDARY--

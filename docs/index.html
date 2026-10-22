@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Is this email phishing? — Email Checker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF2F7; --surface:#FFFFFF; --surface-2:#F6F8FB; --ink:#14213D; --ink-soft:#4A5672;
+  --line:#D5DCE8; --accent:#2F5BD3; --accent-ink:#FFFFFF;
+  --safe:#1F7A5C; --safe-bg:#E3F3EC; --warn:#A86A00; --warn-bg:#FBF0D9; --danger:#B42318; --danger-bg:#FCE7E4;
+  --envelope:#FFFFFF; --stripe-a:#2F5BD3; --stripe-b:#B42318;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1626; --surface:#16213A; --surface-2:#1B2843; --ink:#E7ECF5; --ink-soft:#A6B2CC;
+    --line:#2C3A5A; --accent:#7C9CF5; --accent-ink:#0E1626;
+    --safe:#5BC9A2; --safe-bg:#12352B; --warn:#F2B84B; --warn-bg:#3A2D10; --danger:#FF8A7A; --danger-bg:#3D1A17;
+    --envelope:#1B2843; --stripe-a:#7C9CF5; --stripe-b:#FF8A7A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1626; --surface:#16213A; --surface-2:#1B2843; --ink:#E7ECF5; --ink-soft:#A6B2CC;
+  --line:#2C3A5A; --accent:#7C9CF5; --accent-ink:#0E1626;
+  --safe:#5BC9A2; --safe-bg:#12352B; --warn:#F2B84B; --warn-bg:#3A2D10; --danger:#FF8A7A; --danger-bg:#3D1A17;
+  --envelope:#1B2843; --stripe-a:#7C9CF5; --stripe-b:#FF8A7A;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:400 1.0625rem/1.6 "Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:52rem;margin:0 auto;padding:1.5rem 1.25rem 4rem}
+h1,h2,h3{font-family:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;line-height:1.15;margin:0}
+h1{font-size:clamp(2.1rem,6vw,3.4rem);font-weight:800;letter-spacing:-.02em;max-width:16ch}
+h2{font-size:1.45rem;font-weight:700}
+h3{font-size:1.1rem;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+button,textarea,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+.top{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:2.25rem}
+.brand{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:1.05rem;display:flex;align-items:center;gap:.5rem}
+.brand-mark{width:1.9rem;height:1.3rem;border-radius:3px;position:relative;background:var(--surface);border:2px solid var(--ink)}
+.brand-mark::before{content:"";position:absolute;inset:0;background:
+  linear-gradient(to bottom right,transparent 48%,var(--ink) 49%,var(--ink) 53%,transparent 54%) left/50% 100% no-repeat,
+  linear-gradient(to bottom left,transparent 48%,var(--ink) 49%,var(--ink) 53%,transparent 54%) right/50% 100% no-repeat}
+.lang{display:flex;border:1.5px solid var(--line);border-radius:999px;padding:3px;background:var(--surface)}
+.lang button{border:0;background:none;padding:.3rem .8rem;border-radius:999px;cursor:pointer;font-size:.9rem;color:var(--ink-soft)}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+
+.intro{display:grid;gap:1rem;margin-bottom:2rem}
+.intro p{color:var(--ink-soft);max-width:60ch;font-size:1.1rem}
+
+.panel{background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:1.25rem}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:1.5rem;text-align:center;cursor:pointer;background:var(--surface-2);transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface-2))}
+.drop strong{display:block;font-size:1.05rem}
+.drop span{color:var(--ink-soft);font-size:.95rem}
+.or{display:flex;align-items:center;gap:.75rem;color:var(--ink-soft);font-size:.9rem;margin:1rem 0}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+label.field{display:block;font-weight:700;margin-bottom:.4rem}
+textarea{width:100%;min-height:9rem;resize:vertical;border:1.5px solid var(--line);border-radius:10px;padding:.75rem;background:var(--surface-2);font-size:.92rem;line-height:1.45}
+.actions{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-top:1rem}
+.btn{border:0;border-radius:10px;padding:.75rem 1.3rem;font-weight:700;cursor:pointer;background:var(--accent);color:var(--accent-ink);font-size:1rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.ghost{background:none;border:1.5px solid var(--line);color:var(--ink);font-weight:400;padding:.6rem 1rem;border-radius:10px;cursor:pointer;font-size:.92rem}
+.ghost:hover{border-color:var(--ink-soft)}
+.try{color:var(--ink-soft);font-size:.9rem;margin-right:.2rem}
+.privacy{margin-top:1rem;font-size:.9rem;color:var(--ink-soft);display:flex;gap:.5rem;align-items:flex-start}
+.privacy svg{flex:none;margin-top:.2rem}
+
+details.help{margin-top:1rem;border-top:1px solid var(--line);padding-top:.9rem}
+details.help summary{cursor:pointer;font-weight:700;color:var(--accent)}
+.help-grid{display:grid;gap:1rem;margin-top:.9rem}
+@media(min-width:640px){.help-grid{grid-template-columns:1fr 1fr}}
+.help-grid ol{margin:.4rem 0 0;padding-left:1.2rem;color:var(--ink-soft);font-size:.95rem}
+.help-grid li{margin:.15rem 0}
+
+.error{margin-top:1rem;padding:.8rem 1rem;border-radius:10px;background:var(--danger-bg);color:var(--danger);display:none}
+
+/* ---------- result: the envelope ---------- */
+#result{margin-top:2.5rem;display:none}
+.envelope{position:relative;background:var(--envelope);border-radius:14px;overflow:hidden;border:1.5px solid var(--line)}
+.envelope::before{content:"";display:block;height:10px;
+  background:repeating-linear-gradient(-45deg,var(--stripe-a) 0 14px,transparent 14px 22px,var(--stripe-b) 22px 36px,transparent 36px 44px)}
+.env-body{padding:1.5rem 1.5rem 1.75rem;display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:640px){.env-body{grid-template-columns:1fr auto;align-items:start}}
+.meta{display:grid;gap:.35rem;min-width:0}
+.meta div{display:grid;grid-template-columns:4.5rem 1fr;gap:.5rem}
+.meta dt{color:var(--ink-soft);font-size:.9rem}
+.meta dd{margin:0;overflow-wrap:anywhere;font-weight:700}
+.stamp{justify-self:center;width:12.5rem;padding:.9rem .6rem;border:4px double currentColor;border-radius:10px;text-align:center;transform:rotate(-7deg);
+  font-family:"Bricolage Grotesque",sans-serif;opacity:0}
+.stamp b{display:block;font-size:2rem;font-weight:800;letter-spacing:.02em;line-height:1}
+.stamp small{display:block;margin-top:.35rem;font-size:.85rem;font-weight:500}
+.stamp.danger{color:var(--danger)} .stamp.warn{color:var(--warn)} .stamp.safe{color:var(--safe)}
+.stamp.show{animation:stamp .45s cubic-bezier(.2,.9,.3,1.3) forwards}
+@keyframes stamp{0%{opacity:0;transform:rotate(-7deg) scale(1.9)}100%{opacity:1;transform:rotate(-7deg) scale(1)}}
+@media (prefers-reduced-motion:reduce){.stamp.show{animation:none;opacity:1}}
+
+.meter{grid-column:1/-1}
+.meter-track{height:12px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.meter-fill{height:100%;width:0;border-radius:999px;transition:width .6s ease}
+.meter-row{display:flex;justify-content:space-between;font-size:.9rem;color:var(--ink-soft);margin-top:.35rem}
+
+.advice{margin-top:1rem;padding:1rem 1.2rem;border-radius:12px;display:grid;gap:.35rem}
+.advice.danger{background:var(--danger-bg)} .advice.warn{background:var(--warn-bg)} .advice.safe{background:var(--safe-bg)}
+.advice h3{font-size:1.05rem}
+
+.findings{margin-top:1.75rem;display:grid;gap:.75rem}
+.findings-head{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap}
+.finding{display:grid;grid-template-columns:auto 1fr;gap:.85rem;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:1rem}
+.sev{width:.6rem;border-radius:999px;align-self:stretch}
+.sev.high{background:var(--danger)} .sev.medium{background:var(--warn)} .sev.low{background:var(--ink-soft)}
+.finding h3{font-size:1.02rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:baseline}
+.tag{font-family:"Atkinson Hyperlegible",sans-serif;font-size:.78rem;font-weight:700;padding:.08rem .5rem;border-radius:999px}
+.tag.high{background:var(--danger-bg);color:var(--danger)} .tag.medium{background:var(--warn-bg);color:var(--warn)} .tag.low{background:var(--surface-2);color:var(--ink-soft)}
+.finding .why{color:var(--ink-soft);margin-top:.25rem}
+.finding code{display:block;margin-top:.45rem;font-family:ui-monospace,Consolas,monospace;font-size:.85rem;background:var(--surface-2);border-radius:6px;padding:.35rem .55rem;overflow-wrap:anywhere}
+.empty{color:var(--ink-soft);padding:1rem;border:1.5px dashed var(--line);border-radius:12px}
+
+details.raw{margin-top:1.5rem}
+details.raw summary{cursor:pointer;color:var(--accent);font-weight:700}
+.raw ul{margin:.5rem 0 0;padding-left:1.2rem;font-size:.9rem;color:var(--ink-soft);overflow-wrap:anywhere}
+
+.auto{margin-top:2.5rem}
+.auto h2{margin-bottom:.35rem}
+.auto-lede{color:var(--ink-soft);max-width:60ch;margin-bottom:.8rem}
+.auto-points{margin:0;padding-left:1.2rem;color:var(--ink-soft)}
+.auto-points li{margin:.2rem 0}
+a.btn{text-decoration:none;display:inline-block}
+a.btn[aria-disabled="true"]{opacity:.45;pointer-events:none}
+footer{margin-top:3rem;font-size:.88rem;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:1rem}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span data-i="brand"></span></div>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="es" aria-pressed="false">ES</button>
+    </div>
+  </header>
+
+  <section class="intro">
+    <h1 data-i="title"></h1>
+    <p data-i="lede"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="inputHead">
+    <h2 id="inputHead" class="sr" data-i="inputHead"></h2>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-describedby="dropHint">
+      <strong data-i="dropTitle"></strong>
+      <span id="dropHint" data-i="dropHint"></span>
+      <input type="file" id="file" accept=".eml,.txt,message/rfc822" hidden>
+    </div>
+    <div class="or" data-i="or"></div>
+    <label class="field" for="raw" data-i="pasteLabel"></label>
+    <textarea id="raw" spellcheck="false"></textarea>
+    <div class="actions">
+      <button class="btn" id="check" type="button" disabled data-i="check"></button>
+      <span class="try" data-i="try"></span>
+      <button class="ghost" type="button" data-sample="phish" data-i="samplePhish"></button>
+      <button class="ghost" type="button" data-sample="legit" data-i="sampleLegit"></button>
+    </div>
+    <div class="error" id="error" role="alert"></div>
+    <p class="privacy">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      <span data-i="privacy"></span>
+    </p>
+    <details class="help">
+      <summary data-i="helpTitle"></summary>
+      <div class="help-grid">
+        <div><h3>Gmail</h3><ol data-i-list="gmail"></ol></div>
+        <div><h3>Outlook</h3><ol data-i-list="outlook"></ol></div>
+      </div>
+    </details>
+  </section>
+
+  <section id="result" aria-live="polite">
+    <div class="envelope">
+      <div class="env-body">
+        <dl class="meta">
+          <div><dt data-i="from"></dt><dd id="rFrom"></dd></div>
+          <div><dt data-i="subject"></dt><dd id="rSubject"></dd></div>
+        </dl>
+        <div class="stamp" id="stamp"><b id="stampWord"></b><small id="stampScore"></small></div>
+        <div class="meter">
+          <div class="meter-track"><div class="meter-fill" id="meterFill"></div></div>
+          <div class="meter-row"><span data-i="lowRisk"></span><span data-i="highRisk"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="advice" id="advice"><h3 id="adviceTitle"></h3><p id="adviceText"></p></div>
+
+    <div class="findings">
+      <div class="findings-head"><h2 data-i="foundHead"></h2><span id="count" class="try"></span></div>
+      <div id="list"></div>
+    </div>
+
+    <details class="raw" id="rawBox">
+      <summary data-i="linksHead"></summary>
+      <ul id="links"></ul>
+    </details>
+  </section>
+
+  <section class="panel auto" aria-labelledby="autoHead">
+    <h2 id="autoHead" data-i="autoTitle"></h2>
+    <p class="auto-lede" data-i="autoLede"></p>
+    <ul class="auto-points">
+      <li data-i="autoP1"></li>
+      <li data-i="autoP2"></li>
+      <li data-i="autoP3"></li>
+    </ul>
+    <div class="actions">
+      <a class="btn" id="autoBtn" data-i="autoBtn" target="_blank" rel="noopener"></a>
+      <span class="try" id="autoNote"></span>
+    </div>
+  </section>
+
+  <footer data-i="footer"></footer>
+</div>
+
+<script>
+/* ===================== text (EN / ES) ===================== */
+const T = {
+  en:{
+    brand:"Email Checker", title:"Is this email trying to trick you?",
+    lede:"Paste a suspicious email or drop the file here. You'll get a clear verdict and a plain-language explanation of every warning sign.",
+    inputHead:"Add an email", dropTitle:"Drop the email file here", dropHint:"or click to choose a .eml file",
+    or:"or", pasteLabel:"Paste the full email (including the original headers)", check:"Check this email",
+    try:"Try an example:", samplePhish:"Fake insurance email", sampleLegit:"Normal newsletter",
+    privacy:"Your email never leaves this device. All checks run inside your browser — nothing is uploaded or stored.",
+    helpTitle:"How do I get the full email?",
+    gmail:["Open the email.","Click the three dots (⋮) next to Reply.","Choose “Show original”.","Click “Copy to clipboard” and paste it here."],
+    outlook:["Open the email in Outlook on the web.","Click the three dots (…) at the top of the message.","Go to View → “View message source”.","Select all, copy, and paste it here."],
+    from:"From", subject:"Subject", lowRisk:"Low risk", highRisk:"High risk",
+    foundHead:"What we found", linksHead:"Links and attachments in this email",
+    footer:"A portfolio project by Cristobal. Rule-based checks inspired by how security analysts triage reported emails. It helps you decide — when in doubt, contact the company through its official website or phone number.",
+    count:n=> n===1?"1 warning sign":`${n} warning signs`, none:"No warning signs found.",
+    score:s=>`Risk ${s}/100`,
+    v:{danger:"PHISHING",warn:"SUSPICIOUS",safe:"LOOKS SAFE"},
+    adv:{
+      danger:["Don't click, reply, or open attachments.","This email has several strong signs of a scam. Delete it, or report it as phishing in your email app. If it mentions an account of yours, sign in by typing the company's website yourself — never through the email."],
+      warn:["Be careful with this one.","Some things don't add up. Before you click anything, check with the sender another way — call the number on their official website or on your card."],
+      safe:["No strong warning signs.","This email passed our checks. Still, never share passwords or personal numbers by email, even when a message looks legitimate."]
+    },
+    sev:{high:"High",medium:"Medium",low:"Low"},
+    noLinks:"No links or attachments.",
+    autoTitle:"Protect your inbox automatically", autoLede:"Gmail sometimes lets phishing through. Turn this on and every new email gets checked for you, every 10 minutes — no copying or pasting.",
+    autoP1:"Sign in with Google and approve access. You can remove it anytime.", autoP2:"Suspicious emails get a label like “Email Checker/Phishing”. Nothing is ever deleted.", autoP3:"It runs inside your own Google account — your emails are never sent anywhere else.",
+    autoBtn:"Turn on automatic protection", autoSoon:"Coming soon. Gmail first, Outlook next.", autoGmail:"Works with Gmail for now.",
+    err:{empty:"Paste an email or drop a file first.",read:"That file couldn't be read. Try copying the email text and pasting it instead.",msg:"This looks like an Outlook .msg file, which can't be read here. In Outlook, use “View message source” and paste the text instead."},
+    f:{
+      auth_fail:p=>["The sender's identity check failed",`Email services use ${p.mech.toUpperCase()} to confirm a message really comes from who it says. This one came back “${p.result}”, so the sender may be faked.`,`${p.mech.toUpperCase()} = ${p.result}`],
+      auth_missing:()=>["No identity check information","The email doesn't include the results of the usual sender checks. That's common in forwarded or copied emails, so it's only a small warning.",""],
+      no_headers:()=>["Only part of the email was pasted","Without the technical details (headers) we can only check the text and links. For a full check, use “Show original” in Gmail — see the help above.",""],
+      reply_mismatch:p=>["Replies go to a different company",`It says it's from ${p.from}, but if you hit Reply your answer goes to ${p.other}. Scammers do this to receive your response.`,`${p.hdr}: ${p.other}`],
+      display_name:p=>["The name doesn't match the address",`The sender name mentions “${p.name}”, but the real address is from ${p.domain}. Anyone can type any name — the address is what counts.`,p.domain],
+      lookalike_sender:p=>["Fake look-alike address",`${p.domain} is made to look like ${p.brand}, but it isn't the real company.`,`${p.domain}  ≠  ${p.brand}`],
+      urgency:p=>["Pressure to act fast",`It uses phrases meant to rush you so you don't stop to think. Real companies rarely threaten you with short deadlines.`,p.examples],
+      sensitive:()=>["Asks for private information","It mentions passwords, member IDs, or financial numbers. Real companies won't ask you to send these by email or through a link.",""],
+      deceptive_link:p=>["A link pretends to go somewhere else",`The link shows “${p.shown}”, but clicking it actually takes you to ${p.real}.`,`shows ${p.shown}  →  goes to ${p.real}`],
+      ip_link:p=>["Link goes to a bare number address","Real companies use names like company.com, not a string of numbers. This is a common trick to hide where a link leads.",p.host],
+      shortener:p=>["Link hides its real destination","Shortened links (like bit.ly) hide where they really go.",p.url],
+      risky_tld:p=>["Unusual website ending",`The ending “.${p.tld}” is often used by scam sites and rarely by real companies.`,p.host],
+      lookalike_link:p=>["Link goes to a look-alike site",`${p.host} is made to look like ${p.brand}.`,p.host],
+      at_trick:p=>["Link uses a disguise trick","The link contains an “@” sign. Everything before it is ignored, so the real destination is hidden.",p.url],
+      attachment:p=>["Dangerous attachment",`The file “${p.name}” is a type often used to steal passwords or install harmful software. Don't open it.`,p.name]
+    }
+  },
+  es:{
+    brand:"Revisor de correos", title:"¿Este correo te quiere engañar?",
+    lede:"Pega un correo sospechoso o suelta el archivo aquí. Recibirás un veredicto claro y una explicación sencilla de cada señal de alerta.",
+    inputHead:"Agrega un correo", dropTitle:"Suelta aquí el archivo del correo", dropHint:"o haz clic para elegir un archivo .eml",
+    or:"o", pasteLabel:"Pega el correo completo (incluyendo los encabezados originales)", check:"Revisar este correo",
+    try:"Prueba un ejemplo:", samplePhish:"Correo falso de seguro", sampleLegit:"Boletín normal",
+    privacy:"Tu correo nunca sale de este dispositivo. Todo se revisa dentro de tu navegador: nada se sube ni se guarda.",
+    helpTitle:"¿Cómo obtengo el correo completo?",
+    gmail:["Abre el correo.","Haz clic en los tres puntos (⋮) junto a Responder.","Elige “Mostrar original”.","Haz clic en “Copiar al portapapeles” y pégalo aquí."],
+    outlook:["Abre el correo en Outlook web.","Haz clic en los tres puntos (…) arriba del mensaje.","Ve a Ver → “Ver origen del mensaje”.","Selecciona todo, copia y pégalo aquí."],
+    from:"De", subject:"Asunto", lowRisk:"Riesgo bajo", highRisk:"Riesgo alto",
+    foundHead:"Lo que encontramos", linksHead:"Links y adjuntos de este correo",
+    footer:"Proyecto de portafolio de Cristobal. Revisiones basadas en reglas, inspiradas en cómo los analistas de seguridad revisan correos reportados. Te ayuda a decidir: si tienes dudas, contacta a la empresa por su sitio web o teléfono oficial.",
+    count:n=> n===1?"1 señal de alerta":`${n} señales de alerta`, none:"No encontramos señales de alerta.",
+    score:s=>`Riesgo ${s}/100`,
+    v:{danger:"PHISHING",warn:"SOSPECHOSO",safe:"PARECE SEGURO"},
+    adv:{
+      danger:["No hagas clic, no respondas y no abras adjuntos.","Este correo tiene varias señales fuertes de estafa. Bórralo o repórtalo como phishing en tu app de correo. Si menciona una cuenta tuya, entra escribiendo tú mismo la página de la empresa, nunca desde el correo."],
+      warn:["Ten cuidado con este.","Hay cosas que no cuadran. Antes de hacer clic, confirma con el remitente por otra vía: llama al número de su página oficial o de tu tarjeta."],
+      safe:["Sin señales fuertes de alerta.","Este correo pasó nuestras revisiones. Aun así, nunca compartas contraseñas ni números personales por correo, aunque el mensaje parezca real."]
+    },
+    sev:{high:"Alta",medium:"Media",low:"Baja"},
+    noLinks:"No hay links ni adjuntos.",
+    autoTitle:"Protege tu correo automáticamente", autoLede:"A veces Gmail deja pasar phishing. Actívalo y cada correo nuevo se revisa por ti cada 10 minutos, sin copiar ni pegar nada.",
+    autoP1:"Inicia sesión con Google y aprueba el acceso. Puedes quitarlo cuando quieras.", autoP2:"Los correos sospechosos reciben una etiqueta como “Email Checker/Phishing”. Nunca se borra nada.", autoP3:"Corre dentro de tu propia cuenta de Google: tus correos nunca se envían a otro lugar.",
+    autoBtn:"Activar protección automática", autoSoon:"Muy pronto. Primero Gmail, después Outlook.", autoGmail:"Por ahora funciona con Gmail.",
+    err:{empty:"Primero pega un correo o suelta un archivo.",read:"No se pudo leer ese archivo. Intenta copiar el texto del correo y pegarlo.",msg:"Parece un archivo .msg de Outlook, que no se puede leer aquí. En Outlook usa “Ver origen del mensaje” y pega el texto."},
+    f:{
+      auth_fail:p=>["Falló la verificación del remitente",`Los servicios de correo usan ${p.mech.toUpperCase()} para confirmar que un mensaje viene de quien dice. Este salió “${p.result}”, así que el remitente podría ser falso.`,`${p.mech.toUpperCase()} = ${p.result}`],
+      auth_missing:()=>["Sin información de verificación","El correo no incluye los resultados de las verificaciones normales del remitente. Es común en correos reenviados o copiados, así que es una alerta menor.",""],
+      no_headers:()=>["Solo se pegó parte del correo","Sin los datos técnicos (encabezados) solo podemos revisar el texto y los links. Para una revisión completa usa “Mostrar original” en Gmail; mira la ayuda de arriba.",""],
+      reply_mismatch:p=>["Las respuestas van a otra empresa",`Dice venir de ${p.from}, pero si le das Responder tu mensaje llega a ${p.other}. Los estafadores hacen esto para recibir tu respuesta.`,`${p.hdr}: ${p.other}`],
+      display_name:p=>["El nombre no coincide con la dirección",`El nombre del remitente dice “${p.name}”, pero la dirección real es de ${p.domain}. Cualquiera puede escribir cualquier nombre: lo que cuenta es la dirección.`,p.domain],
+      lookalike_sender:p=>["Dirección falsa que imita a otra",`${p.domain} está hecho para parecerse a ${p.brand}, pero no es la empresa real.`,`${p.domain}  ≠  ${p.brand}`],
+      urgency:p=>["Presión para actuar rápido","Usa frases para apurarte y que no te detengas a pensar. Las empresas reales casi nunca te amenazan con plazos cortos.",p.examples],
+      sensitive:()=>["Pide información privada","Menciona contraseñas, números de afiliado o datos financieros. Las empresas reales no te piden enviarlos por correo ni por un link.",""],
+      deceptive_link:p=>["Un link finge ir a otro lado",`El link muestra “${p.shown}”, pero al hacer clic te lleva a ${p.real}.`,`muestra ${p.shown}  →  va a ${p.real}`],
+      ip_link:p=>["Link a una dirección de puros números","Las empresas reales usan nombres como empresa.com, no una serie de números. Es un truco común para esconder a dónde lleva el link.",p.host],
+      shortener:p=>["El link esconde su destino real","Los links acortados (como bit.ly) esconden a dónde van realmente.",p.url],
+      risky_tld:p=>["Terminación de sitio inusual",`La terminación “.${p.tld}” la usan mucho los sitios de estafa y casi nunca las empresas reales.`,p.host],
+      lookalike_link:p=>["El link va a un sitio que imita a otro",`${p.host} está hecho para parecerse a ${p.brand}.`,p.host],
+      at_trick:p=>["El link usa un truco de disfraz","El link tiene un “@”. Todo lo que está antes se ignora, así que el destino real queda escondido.",p.url],
+      attachment:p=>["Adjunto peligroso",`El archivo “${p.name}” es de un tipo que se usa para robar contraseñas o instalar software dañino. No lo abras.`,p.name]
+    }
+  }
+};
+
+/* ===================== rules ===================== */
+const BRANDS=["floridablue.com","microsoft.com","office365.com","google.com","paypal.com","amazon.com","apple.com","chase.com","bankofamerica.com","wellsfargo.com","docusign.com","linkedin.com","outlook.com","netflix.com","usps.com","fedex.com","irs.gov","hccs.edu","uh.edu"];
+const SHORTENERS=new Set(["bit.ly","tinyurl.com","t.co","goo.gl","ow.ly","is.gd","buff.ly","rebrand.ly","cutt.ly","shorturl.at"]);
+const RISKY_TLDS=new Set(["zip","mov","xyz","top","click","country","gq","tk","ml","cf","work","rest","support"]);
+const RISKY_EXT=new Set([".exe",".scr",".js",".vbs",".bat",".cmd",".iso",".img",".html",".htm",".hta",".lnk",".docm",".xlsm",".zip",".rar",".7z"]);
+const URGENCY=[/urgent/i,/immediately/i,/within 24 hours/i,/account (will be )?(suspended|locked|closed)/i,/verify your (account|identity|information)/i,/unusual (sign-in|activity)/i,/final notice/i,/action required/i,/confirm your password/i,/(coverage|benefits) will be (terminated|cancell?ed)/i,
+  /urgente/i,/inmediatamente/i,/cuenta (será )?(suspendida|bloqueada|cerrada)/i,/verifi(que|ca) (su|tu) (cuenta|identidad)/i,/acción requerida/i,/en las próximas 24 horas/i];
+const SENSITIVE=/(password|contraseña|ssn|social security|member id|credit card|tarjeta de crédito|routing number|número de cuenta)/i;
+const POINTS={high:30,medium:15,low:5};
+
+/* ===================== email parsing ===================== */
+const bytesToText=(bytes,charset)=>{try{return new TextDecoder(charset||"utf-8").decode(bytes)}catch{return new TextDecoder("utf-8").decode(bytes)}};
+const b64ToBytes=s=>{try{const bin=atob(s.replace(/\s+/g,""));return Uint8Array.from(bin,c=>c.charCodeAt(0))}catch{return new Uint8Array()}};
+function qpToBytes(s){
+  s=s.replace(/=\r?\n/g,""); const out=[];
+  for(let i=0;i<s.length;i++){
+    if(s[i]==="="&&/^[0-9A-F]{2}$/i.test(s.substr(i+1,2))){out.push(parseInt(s.substr(i+1,2),16));i+=2}
+    else{const code=s.charCodeAt(i); if(code<128)out.push(code); else out.push(...new TextEncoder().encode(s[i]))}
+  }
+  return new Uint8Array(out);
+}
+function decodeWords(str){
+  return (str||"").replace(/=\?([^?]+)\?([BQ])\?([^?]*)\?=/gi,(m,cs,enc,txt)=>{
+    const bytes=enc.toUpperCase()==="B"?b64ToBytes(txt):qpToBytes(txt.replace(/_/g," "));
+    return bytesToText(bytes,cs);
+  });
+}
+function splitHead(raw){
+  const idx=raw.search(/\n\s*\n/);
+  return idx<0?[raw,""]:[raw.slice(0,idx),raw.slice(idx).replace(/^\n\s*\n/,"")];
+}
+function parseHeaders(text){
+  const h={}; const lines=text.replace(/\n[ \t]+/g," ").split("\n");
+  for(const line of lines){const m=line.match(/^([\w-]+):\s*(.*)$/); if(m){const k=m[1].toLowerCase(); (h[k]=h[k]||[]).push(m[2])}}
+  return h;
+}
+const hv=(h,k)=>(h[k]||[]).join(" ");
+const param=(v,name)=>{const m=(v||"").match(new RegExp(name+'\\*?=\\s*"?([^";]+)"?',"i"));return m?decodeWords(m[1].trim()):""};
+
+function walk(headers,body,acc){
+  const ctype=hv(headers,"content-type")||"text/plain";
+  const type=ctype.split(";")[0].trim().toLowerCase();
+  const boundary=param(ctype,"boundary");
+  if(type.startsWith("multipart/")&&boundary){
+    const parts=body.split("--"+boundary);
+    for(let i=1;i<parts.length;i++){
+      let seg=parts[i]; if(seg.startsWith("--"))break;
+      seg=seg.replace(/^[ \t]*\n/,"");
+      const [ht,bt]=splitHead(seg); walk(parseHeaders(ht),bt,acc);
+    }
+    return;
+  }
+  const disp=hv(headers,"content-disposition");
+  const filename=param(disp,"filename")||param(ctype,"name");
+  const enc=hv(headers,"content-transfer-encoding").trim().toLowerCase();
+  const charset=param(ctype,"charset")||"utf-8";
+  if(filename||/^attachment/i.test(disp)){acc.attachments.push(filename||"(unnamed file)");return}
+  let text=body;
+  if(enc==="base64")text=bytesToText(b64ToBytes(body),charset);
+  else if(enc==="quoted-printable")text=bytesToText(qpToBytes(body),charset);
+  if(type==="text/html")acc.html+=text+"\n"; else if(type.startsWith("text/"))acc.text+=text+"\n";
+}
+
+function parseEmail(raw){
+  raw=raw.replace(/\r\n?/g,"\n").replace(/^\s+/,"");
+  const looksLikeHeaders=/^[\w-]+:\s/.test(raw)&&/^(from|subject|received|delivered-to|return-path|date|to|mime-version|message-id|authentication-results):/im.test(raw.slice(0,4000));
+  const acc={text:"",html:"",attachments:[]};
+  if(!looksLikeHeaders){
+    if(/<a\s|<html|<p>/i.test(raw))acc.html=raw; else acc.text=raw;
+    return {headers:{},hasHeaders:false,...acc};
+  }
+  const [ht,bt]=splitHead(raw); const headers=parseHeaders(ht);
+  walk(headers,bt,acc);
+  return {headers,hasHeaders:true,...acc};
+}
+
+/* ===================== analysis ===================== */
+const domainOf=a=>{const m=(a||"").match(/@([\w.-]+)/);return m?m[1].toLowerCase():""};
+const rootDomain=h=>{const p=(h||"").toLowerCase().split(".").filter(Boolean);return p.length>=2?p.slice(-2).join("."):(h||"")};
+function lev(a,b){const d=Array.from({length:b.length+1},(_,i)=>i);for(let i=1;i<=a.length;i++){let prev=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,prev+(a[i-1]===b[j-1]?0:1));prev=t}}return d[b.length]}
+function lookalike(host){
+  const d=rootDomain(host); if(!d)return null;
+  for(const b of BRANDS){
+    if(d===b)return null;
+    const name=b.split(".")[0];
+    if(lev(d,b)<=2&&lev(d,b)>0)return b;
+    if(name.length>=4&&d.includes(name))return b;
+  }
+  return null;
+}
+const hostOf=u=>{try{return new URL(u).hostname.toLowerCase()}catch{return ""}};
+
+function analyze(mail){
+  const F=[]; const add=(id,sev,p={})=>F.push({id,sev,p});
+  const H=mail.headers;
+  const fromRaw=decodeWords(hv(H,"from")); const subject=decodeWords(hv(H,"subject"));
+  const fromDomain=domainOf(fromRaw);
+  const display=fromRaw.split("<")[0].replace(/"/g,"").trim().toLowerCase();
+
+  if(!mail.hasHeaders) add("no_headers","low");
+  else{
+    const auth=hv(H,"authentication-results").toLowerCase();
+    if(!auth) add("auth_missing","low");
+    for(const mech of ["spf","dkim","dmarc"]){
+      const m=auth.match(new RegExp(mech+"=(\\w+)"));
+      if(m&&["fail","softfail","none","permerror"].includes(m[1])) add("auth_fail","high",{mech,result:m[1]});
+    }
+    for(const [key,label] of [["reply-to","Reply-To"],["return-path","Return-Path"]]){
+      const other=domainOf(hv(H,key));
+      if(other&&fromDomain&&rootDomain(other)!==rootDomain(fromDomain)) add("reply_mismatch","medium",{hdr:label,other,from:fromDomain});
+    }
+    for(const b of BRANDS){
+      const name=b.split(".")[0];
+      if(name.length>=4&&display.replace(/\s+/g,"").includes(name)&&rootDomain(fromDomain)!==b){add("display_name","high",{name:fromRaw.split("<")[0].replace(/"/g,"").trim(),domain:fromDomain});break}
+    }
+    const lb=lookalike(fromDomain); if(lb) add("lookalike_sender","high",{domain:fromDomain,brand:lb});
+  }
+
+  // links
+  const links=[]; let htmlText="";
+  if(mail.html){
+    const doc=new DOMParser().parseFromString(mail.html,"text/html");
+    htmlText=doc.body?doc.body.textContent:"";
+    doc.querySelectorAll("a[href]").forEach(a=>links.push({href:a.getAttribute("href")||"",text:(a.textContent||"").trim()}));
+  }
+  const all=`${subject}\n${mail.text}\n${htmlText}`;
+  const hits=[...new Set(URGENCY.map(r=>(all.match(r)||[])[0]).filter(Boolean).map(s=>s.toLowerCase()))];
+  if(hits.length) add("urgency",hits.length>=3?"high":"medium",{examples:hits.slice(0,4).map(s=>`“${s}”`).join(", ")});
+  if(SENSITIVE.test(all)) add("sensitive","high");
+
+  const urls=new Set(); (mail.text.match(/https?:\/\/[^\s"'<>)]+/g)||[]).forEach(u=>urls.add(u));
+  links.forEach(l=>{if(/^https?:/i.test(l.href))urls.add(l.href)});
+  for(const l of links){
+    const shown=(l.text.match(/([\w-]+\.)+[a-z]{2,}/i)||[])[0]; const real=hostOf(l.href);
+    if(shown&&real&&rootDomain(shown)!==rootDomain(real)) add("deceptive_link","high",{shown,real});
+  }
+  for(const u of urls){
+    const host=hostOf(u); if(!host)continue;
+    if(/^[\d.]+$/.test(host)) add("ip_link","high",{host});
+    if(SHORTENERS.has(host)) add("shortener","medium",{url:u});
+    const tld=host.split(".").pop(); if(RISKY_TLDS.has(tld)) add("risky_tld","medium",{host,tld});
+    const lb=lookalike(host); if(lb&&!/^[\d.]+$/.test(host)) add("lookalike_link","high",{host,brand:lb});
+    try{const n=new URL(u); if(n.username) add("at_trick","high",{url:u})}catch{}
+  }
+  for(const name of mail.attachments){
+    const ext=(name.match(/\.[^.]+$/)||[""])[0].toLowerCase();
+    if(RISKY_EXT.has(ext)) add("attachment","high",{name});
+  }
+
+  const seen=new Set(); const uniq=F.filter(f=>{const k=f.id+JSON.stringify(f.p);if(seen.has(k))return false;seen.add(k);return true});
+  const score=Math.min(100,uniq.reduce((s,f)=>s+POINTS[f.sev],0));
+  const level=score>=60?"danger":score>=25?"warn":"safe";
+  return {from:fromRaw||"—",subject:subject||"—",findings:uniq,score,level,urls:[...urls],attachments:mail.attachments};
+}
+
+/* ===================== samples ===================== */
+const SAMPLES={
+phish:`From: "Florida Blue Member Services" <alerts@floridablue-benefits.com>
+Reply-To: support@secure-claims.xyz
+Return-Path: <bounce@mailer-xz9.top>
+To: member@example.com
+Subject: URGENT: Your coverage will be terminated within 24 hours
+Authentication-Results: mx.example.com; spf=fail smtp.mailfrom=mailer-xz9.top; dkim=none; dmarc=fail
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BOUNDARY"
+
+--BOUNDARY
+Content-Type: text/html; charset="utf-8"
+
+<html><body>
+<p>Dear Member,</p>
+<p>We detected unusual activity on your health plan. Your coverage will be terminated unless you verify your identity immediately.</p>
+<p>Please confirm your Member ID and password here:
+<a href="http://185.22.14.7/login/floridablue">https://www.floridablue.com/verify</a></p>
+<p>Or use this backup link: <a href="https://bit.ly/3fb-verify">Verify now</a></p>
+<p>Florida Blue Member Services</p>
+</body></html>
+
+--BOUNDARY
+Content-Type: application/octet-stream
+Content-Disposition: attachment; filename="Claim_Statement.html"
+
+PGh0bWw+PC9odG1sPg==
+--BOUNDARY--`,
+legit:`From: "GitHub" <noreply@github.com>
+To: dev@example.com
+Subject: Your weekly GitHub digest
+Authentication-Results: mx.example.com; spf=pass smtp.mailfrom=github.com; dkim=pass header.d=github.com; dmarc=pass
+MIME-Version: 1.0
+Content-Type: text/html; charset="utf-8"
+
+<html><body>
+<p>Here are the trending repositories this week.</p>
+<p><a href="https://github.com/trending">github.com/trending</a></p>
+<p>You can change notification settings at https://github.com/settings/notifications</p>
+</body></html>`
+};
+
+/* ===================== UI ===================== */
+let lang=(navigator.language||"en").toLowerCase().startsWith("es")?"es":"en";
+try{const s=localStorage.getItem("lang"); if(s==="en"||s==="es")lang=s}catch{}
+let last=null;
+const $=id=>document.getElementById(id);
+const raw=$("raw"), checkBtn=$("check"), err=$("error");
+
+function applyLang(){
+  const t=T[lang]; document.documentElement.lang=lang;
+  document.querySelectorAll("[data-i]").forEach(el=>{el.textContent=t[el.dataset.i]});
+  document.querySelectorAll("[data-i-list]").forEach(el=>{el.innerHTML="";t[el.dataset.iList].forEach(s=>{const li=document.createElement("li");li.textContent=s;el.appendChild(li)})});
+  document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.lang===lang));
+  if(last)render(last,false);
+}
+function showError(key){err.textContent=T[lang].err[key];err.style.display="block"}
+function clearError(){err.style.display="none"}
+
+function render(r,animate=true){
+  const t=T[lang];
+  $("result").style.display="block";
+  $("rFrom").textContent=r.from; $("rSubject").textContent=r.subject;
+  const stamp=$("stamp"); stamp.className="stamp "+r.level;
+  $("stampWord").textContent=t.v[r.level]; $("stampScore").textContent=t.score(r.score);
+  if(animate){void stamp.offsetWidth} stamp.classList.add("show");
+  const fill=$("meterFill"); fill.style.background=`var(--${r.level})`; fill.style.width="0";
+  requestAnimationFrame(()=>{fill.style.width=Math.max(r.score,3)+"%"});
+  const adv=$("advice"); adv.className="advice "+r.level;
+  $("adviceTitle").textContent=t.adv[r.level][0]; $("adviceText").textContent=t.adv[r.level][1];
+  $("count").textContent=r.findings.length?t.count(r.findings.length):"";
+  const list=$("list"); list.innerHTML="";
+  if(!r.findings.length){const e=document.createElement("p");e.className="empty";e.textContent=t.none;list.appendChild(e)}
+  const order={high:0,medium:1,low:2};
+  [...r.findings].sort((a,b)=>order[a.sev]-order[b.sev]).forEach(f=>{
+    const [title,why,evidence]=t.f[f.id](f.p);
+    const card=document.createElement("article"); card.className="finding";
+    card.innerHTML=`<span class="sev ${f.sev}" aria-hidden="true"></span><div><h3></h3><p class="why"></p></div>`;
+    const h=card.querySelector("h3"); h.textContent=title;
+    const tag=document.createElement("span"); tag.className="tag "+f.sev; tag.textContent=t.sev[f.sev]; h.appendChild(tag);
+    card.querySelector(".why").textContent=why;
+    if(evidence){const c=document.createElement("code");c.textContent=evidence;card.querySelector("div").appendChild(c)}
+    list.appendChild(card);
+  });
+  const ul=$("links"); ul.innerHTML="";
+  const items=[...r.urls,...r.attachments.map(a=>"📎 "+a)];
+  if(!items.length){const li=document.createElement("li");li.textContent=t.noLinks;ul.appendChild(li)}
+  items.forEach(u=>{const li=document.createElement("li");li.textContent=u;ul.appendChild(li)});
+  if(animate)$("result").scrollIntoView({behavior:(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)?"auto":"smooth",block:"start"});
+}
+
+function run(){
+  clearError();
+  const text=raw.value.trim(); if(!text){showError("empty");return}
+  last=analyze(parseEmail(text)); render(last);
+}
+
+raw.addEventListener("input",()=>{checkBtn.disabled=!raw.value.trim()});
+checkBtn.addEventListener("click",run);
+document.querySelectorAll("[data-sample]").forEach(b=>b.addEventListener("click",()=>{raw.value=SAMPLES[b.dataset.sample];checkBtn.disabled=false;run()}));
+document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>{lang=b.dataset.lang;try{localStorage.setItem("lang",lang)}catch{}applyLang()}));
+
+const drop=$("drop"), file=$("file");
+function readFile(f){
+  clearError(); if(!f)return;
+  if(/\.msg$/i.test(f.name)){showError("msg");return}
+  const rd=new FileReader();
+  rd.onload=()=>{raw.value=String(rd.result||"");checkBtn.disabled=!raw.value.trim();run()};
+  rd.onerror=()=>showError("read"); rd.readAsText(f);
+}
+drop.addEventListener("click",()=>file.click());
+drop.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();file.click()}});
+file.addEventListener("change",()=>readFile(file.files[0]));
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over")}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over")}));
+drop.addEventListener("drop",e=>readFile(e.dataTransfer.files[0]));
+document.addEventListener("dragover",e=>e.preventDefault());
+document.addEventListener("drop",e=>{e.preventDefault();if(e.target!==drop&&!drop.contains(e.target))readFile(e.dataTransfer.files[0])});
+
+/* Paste your Apps Script web app link here (Deploy → Web app URL) */
+const AUTO_URL = "https://script.google.com/macros/s/AKfycbxfDPzAaPJ-mcHRpZHV8P9gMxxHGhFEPRCFP-X5dZQyIjMbkmPMFldOwUYoEdTTM9JE/exec";
+function updateAuto(){
+  const b=$("autoBtn"), n=$("autoNote"), t=T[lang];
+  if(AUTO_URL){b.href=AUTO_URL;b.removeAttribute("aria-disabled");n.textContent=t.autoGmail}
+  else{b.removeAttribute("href");b.setAttribute("aria-disabled","true");n.textContent=t.autoSoon}
+}
+document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",updateAuto));
+applyLang();
+updateAuto();
+</script>
+</body>
+</html>

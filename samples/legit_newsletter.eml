@@ -1,0 +1,13 @@
+From: "GitHub" <noreply@github.com>
+To: dev@example.com
+Subject: Your weekly GitHub digest
+Date: Fri, 16 Oct 2026 08:00:00 -0400
+Authentication-Results: mx.example.com; spf=pass smtp.mailfrom=github.com; dkim=pass header.d=github.com; dmarc=pass
+MIME-Version: 1.0
+Content-Type: text/html; charset="utf-8"
+
+<html><body>
+<p>Here are the trending repositories this week.</p>
+<p><a href="https://github.com/trending">github.com/trending</a></p>
+<p>You can change notification settings at https://github.com/settings/notifications</p>
+</body></html>
